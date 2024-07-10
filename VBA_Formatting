@@ -1,0 +1,115 @@
+
+Sub XBatchAutoFormatSpanish()
+    Dim folderPath As String
+    Dim fileName As String
+    Dim doc As Document
+    Dim para As Paragraph
+    Dim rng As Range
+    Dim sec As Section
+    Dim hdr As HeaderFooter
+    Dim ftr As HeaderFooter
+    Dim tbl As Table
+    Dim colFour As Single
+    Dim colTwo As Single
+    Dim diff As Single
+    Dim cell As cell
+    Dim firstCellWidth As Single
+    Dim allEqual As Boolean
+    Dim rowIndex As Integer, colIndex As Integer
+
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Select Folder Containing Word Documents"
+        If .Show = -1 Then
+            folderPath = .SelectedItems(1)
+        Else
+            MsgBox "No folder selected. Process cancelled.", vbExclamation
+            Exit Sub
+        End If
+    End With
+
+    If Right(folderPath, 1) <> "\" Then
+        folderPath = folderPath & "\"
+    End If
+
+    fileName = Dir(folderPath & "*.doc*")
+    Do While fileName <> ""
+        Set doc = Documents.Open(folderPath & fileName)
+
+        'Unset CompatibilityMode
+        If doc.CompatibilityMode <> wdWord2013 Then
+            doc.Convert
+            doc.Save
+        End If
+
+        'Unset Hidden and set calibri font
+        For Each para In doc.Paragraphs
+            Set rng = para.Range
+            rng.Font.Hidden = False
+            rng.Font.Name = "Calibri"
+        Next para
+
+        For Each sec In doc.Sections
+            For Each hdr In sec.Headers
+                If hdr.Exists Then
+                    Set rng = hdr.Range
+                    rng.Font.Name = "Calibri"
+                    rng.Font.Hidden = False
+                End If
+            Next hdr
+
+            For Each ftr In sec.Footers
+                If ftr.Exists Then
+                    Set rng = ftr.Range
+                    rng.Font.Hidden = False
+                    rng.Font.Name = "Calibri"
+                End If
+            Next ftr
+        Next sec
+
+        doc.Content.Select
+        Selection.Collapse
+
+        If doc.Tables.Count > 0 Then
+            If doc.Tables(2).Columns.Count = 3 Then
+                'Autofit two first tables
+                doc.Tables(1).Columns(2).AutoFit
+                doc.Tables(2).Columns(2).AutoFit
+
+                For Each tbl In doc.Tables
+                    If tbl.Columns.Count >= 7 Then
+                        allEqual = True
+                        ' Check if there are not mixed width tables
+                        For colIndex = 1 To tbl.Columns.Count
+                            firstCellWidth = tbl.cell(1, colIndex).width
+
+                            For rowIndex = 2 To tbl.Rows.Count
+                                If tbl.cell(rowIndex, colIndex).width <> firstCellWidth Then
+                                    allEqual = False
+                                    Exit For
+                                End If
+                            Next rowIndex
+
+                            If Not allEqual Then Exit For
+                        Next colIndex
+
+                        If allEqual Then
+                            colTwo = tbl.Columns(2).width
+                            colFour = tbl.Columns(4).width
+                            diff = colTwo - CentimetersToPoints(2.4)
+                            tbl.Columns(2).width = colTwo - diff
+                            tbl.Columns(4).width = colFour + diff
+                        End If
+                    End If
+                Next tbl
+            Else
+
+            End If
+        End If
+
+        'Save changes
+        doc.Close SaveChanges:=wdSaveChanges
+        fileName = Dir
+    Loop
+
+    MsgBox "Auto format done", vbInformation
+End Sub
