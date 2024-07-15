@@ -1,5 +1,5 @@
 
-Sub XBatchAutoFormatSpanish()
+Sub BatchAutoFormatSpanish()
     Dim folderPath As String
     Dim fileName As String
     Dim doc As Document
