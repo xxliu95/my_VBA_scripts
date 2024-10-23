@@ -1,0 +1,365 @@
+
+
+Sub BatchAutoFormat2()
+    Dim folderPath As String
+    Dim fileName As String
+    Dim doc As Document
+    Dim para As Paragraph
+    Dim rng As Range
+    Dim sec As Section
+    Dim hdr As HeaderFooter
+    Dim ftr As HeaderFooter
+    Dim tbl As Table
+    Dim colFive As Single
+    Dim colOne As Single
+    Dim diff As Single
+    Dim cell As cell
+    Dim firstCellWidth As Single
+    Dim allEqual As Boolean
+    Dim rowIndex As Integer, colIndex As Integer
+    Dim totalPages As Long
+
+    totalPages = 0
+
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Select Folder Containing Word Documents"
+        If .Show = -1 Then
+            folderPath = .SelectedItems(1)
+        Else
+            MsgBox "No folder selected. Process cancelled.", vbExclamation
+            Exit Sub
+        End If
+    End With
+
+    If Right(folderPath, 1) <> "\" Then
+        folderPath = folderPath & "\"
+    End If
+
+    fileName = Dir(folderPath & "*.doc*")
+    Do While fileName <> ""
+        Set doc = Documents.Open(folderPath & fileName)
+        totalPages = totalPages + doc.ComputeStatistics(Statistic:=wdStatisticPages)
+
+        doc.RemoveDocumentInformation wdRDIAll
+
+        'Unset CompatibilityMode
+        If doc.CompatibilityMode <> wdWord2013 Then
+            doc.Convert
+            doc.Save
+        End If
+
+        'Unset Hidden and set font
+        Dim i As Integer
+        For i = 1 To doc.Paragraphs.count
+            Set rng = doc.Paragraphs(i).Range
+            rng.Font.NameFarEast = "SimSun"
+            rng.Font.Hidden = False
+            If i = 5 Or i = 6 Or i = 9 Then
+                rng.Font.Name = "Times New Roman"
+            Else
+                rng.Font.Name = "Avenir Next LT Pro"
+            End If
+        Next i
+
+        For Each sec In doc.Sections
+            For Each hdr In sec.Headers
+                If hdr.Exists Then
+                    Set rng = hdr.Range
+                    rng.Font.Hidden = False
+                End If
+            Next hdr
+
+            For Each ftr In sec.Footers
+                If ftr.Exists Then
+                    Set rng = ftr.Range
+                    rng.Font.Hidden = False
+                End If
+            Next ftr
+        Next sec
+
+        doc.Content.Select
+        Selection.Collapse
+
+        'Save changes
+        'doc.Close SaveChanges:=wdSaveChanges
+        doc.Save
+        fileName = Dir
+    Loop
+
+    MsgBox "Auto format done, total pages: " & totalPages, vbInformation
+End Sub
+
+Sub BatchAutoFormat()
+    Dim folderPath As String
+    Dim fileName As String
+    Dim doc As Document
+    Dim para As Paragraph
+    Dim rng As Range
+    Dim sec As Section
+    Dim hdr As HeaderFooter
+    Dim ftr As HeaderFooter
+    Dim tbl As Table
+    Dim colFive As Single
+    Dim colOne As Single
+    Dim diff As Single
+    Dim cell As cell
+    Dim firstCellWidth As Single
+    Dim allEqual As Boolean
+    Dim rowIndex As Integer, colIndex As Integer
+    Dim totalPages As Long
+
+    totalPages = 0
+
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Select Folder Containing Word Documents"
+        If .Show = -1 Then
+            folderPath = .SelectedItems(1)
+        Else
+            MsgBox "No folder selected. Process cancelled.", vbExclamation
+            Exit Sub
+        End If
+    End With
+
+    If Right(folderPath, 1) <> "\" Then
+        folderPath = folderPath & "\"
+    End If
+
+    fileName = Dir(folderPath & "*.doc*")
+    Do While fileName <> ""
+        Set doc = Documents.Open(folderPath & fileName)
+        totalPages = totalPages + doc.ComputeStatistics(Statistic:=wdStatisticPages)
+
+        doc.RemoveDocumentInformation wdRDIAll
+
+        'Unset CompatibilityMode
+        If doc.CompatibilityMode <> wdWord2013 Then
+            doc.Convert
+            doc.Save
+        End If
+
+        'Unset Hidden and set font
+        For Each para In doc.Paragraphs
+            Set rng = para.Range
+            rng.Font.Name = "Calibri"
+            rng.Font.NameFarEast = "SimSun"
+            rng.Font.Hidden = False
+        Next para
+
+        For Each sec In doc.Sections
+            For Each hdr In sec.Headers
+                If hdr.Exists Then
+                    Set rng = hdr.Range
+                    rng.Font.Hidden = False
+                End If
+            Next hdr
+
+            For Each ftr In sec.Footers
+                If ftr.Exists Then
+                    Set rng = ftr.Range
+                    rng.Font.Hidden = False
+                End If
+            Next ftr
+        Next sec
+
+        doc.Content.Select
+        Selection.Collapse
+
+        'Save changes
+        'doc.Close SaveChanges:=wdSaveChanges
+        doc.Save
+        fileName = Dir
+    Loop
+
+    MsgBox "Auto format done, total pages: " & totalPages, vbInformation
+End Sub
+
+
+Sub BatchAutoFormatSpanish()
+    Dim folderPath As String
+    Dim fileName As String
+    Dim doc As Document
+    Dim para As Paragraph
+    Dim rng As Range
+    Dim sec As Section
+    Dim hdr As HeaderFooter
+    Dim ftr As HeaderFooter
+    Dim tbl As Table
+    Dim colFour As Single
+    Dim colTwo As Single
+    Dim diff As Single
+    Dim cell As cell
+    Dim firstCellWidth As Single
+    Dim allEqual As Boolean
+    Dim rowIndex As Integer, colIndex As Integer
+
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .Title = "Select Folder Containing Word Documents"
+        If .Show = -1 Then
+            folderPath = .SelectedItems(1)
+        Else
+            MsgBox "No folder selected. Process cancelled.", vbExclamation
+            Exit Sub
+        End If
+    End With
+
+    If Right(folderPath, 1) <> "\" Then
+        folderPath = folderPath & "\"
+    End If
+
+    fileName = Dir(folderPath & "*.doc*")
+    Do While fileName <> ""
+        Set doc = Documents.Open(folderPath & fileName)
+
+        'Unset CompatibilityMode
+        If doc.CompatibilityMode <> wdWord2013 Then
+            doc.Convert
+            doc.Save
+        End If
+
+        'Unset Hidden and set calibri font
+        For Each para In doc.Paragraphs
+            Set rng = para.Range
+            rng.Font.Hidden = False
+            rng.Font.Name = "Calibri"
+        Next para
+
+        For Each sec In doc.Sections
+            For Each hdr In sec.Headers
+                If hdr.Exists Then
+                    Set rng = hdr.Range
+                    rng.Font.Name = "Calibri"
+                    rng.Font.Hidden = False
+                End If
+            Next hdr
+
+            For Each ftr In sec.Footers
+                If ftr.Exists Then
+                    Set rng = ftr.Range
+                    rng.Font.Hidden = False
+                    rng.Font.Name = "Calibri"
+                End If
+            Next ftr
+        Next sec
+
+        doc.Content.Select
+        Selection.Collapse
+
+        'Table changes
+        If doc.Tables.count > 0 Then
+            If doc.Tables(2).Columns.count = 3 Then
+                'Autofit two first tables
+                doc.Tables(1).Columns(2).AutoFit
+                doc.Tables(2).Columns(2).AutoFit
+
+                For Each tbl In doc.Tables
+                    If tbl.Columns.count >= 7 Then
+                        allEqual = True
+                        ' Check if there are not mixed width tables
+                        For colIndex = 1 To tbl.Columns.count
+                            firstCellWidth = tbl.cell(1, colIndex).width
+
+                            For rowIndex = 2 To tbl.Rows.count
+                                If tbl.cell(rowIndex, colIndex).width <> firstCellWidth Then
+                                    allEqual = False
+                                    Exit For
+                                End If
+                            Next rowIndex
+
+                            If Not allEqual Then Exit For
+                        Next colIndex
+
+                        If allEqual Then
+                            colTwo = tbl.Columns(2).width
+                            colFour = tbl.Columns(4).width
+                            diff = colTwo - CentimetersToPoints(2.4)
+                            tbl.Columns(2).width = colTwo - diff
+                            tbl.Columns(4).width = colFour + diff
+                        End If
+                    End If
+                Next tbl
+            Else
+
+            End If
+        End If
+
+        'Save changes
+        doc.Close SaveChanges:=wdSaveChanges
+        fileName = Dir
+    Loop
+
+    MsgBox "Auto format done", vbInformation
+End Sub
+
+Sub SetTableSLastColumn()
+    Dim tbl As Table
+    Dim colFive As Single
+    Dim colOne As Single
+    Dim diff As Single
+
+    For Each tbl In ActiveDocument.Tables
+        If tbl.Columns.count >= 7 Then
+            colTwo = tbl.Columns(6).width
+            colFour = tbl.Columns(3).width
+            diff = colTwo - CentimetersToPoints(1.6)
+            tbl.Columns(6).width = colTwo - diff
+            tbl.Columns(3).width = colFour + diff
+        End If
+    Next tbl
+End Sub
+
+
+Sub SetTable4LastColumn()
+    Dim tbl As Table
+    Dim colFive As Single
+    Dim colOne As Single
+    Dim diff As Single
+
+    For Each tbl In ActiveDocument.Tables
+        If tbl.Columns.count >= 7 Then
+            colTwo = tbl.Columns(4).width
+            colFour = tbl.Columns(3).width
+            diff = colTwo - CentimetersToPoints(5)
+            tbl.Columns(4).width = colTwo - diff
+            tbl.Columns(3).width = colFour + diff
+        End If
+    Next tbl
+End Sub
+
+
+Sub SetTableLastColumn()
+    Dim tbl As Table
+    Dim colFive As Single
+    Dim colOne As Single
+    Dim diff As Single
+
+    For Each tbl In ActiveDocument.Tables
+        If tbl.Columns.count >= 7 Then
+            colTwo = tbl.Columns(7).width
+            colFour = tbl.Columns(4).width
+            diff = colTwo - CentimetersToPoints(1.6)
+            tbl.Columns(7).width = colTwo - diff
+            tbl.Columns(4).width = colFour + diff
+        End If
+    Next tbl
+End Sub
+
+Sub SetFooterFontFromThirdPage()
+    Dim sec As Section
+    Dim i As Integer
+    Dim footerRange As Range
+
+    Set doc = ActiveDocument
+
+    For Each sec In doc.Sections
+        For Each footer In sec.Footers
+            Set r = footer.Range
+            For pgNum = 1 To r.Information(wdActiveEndPageNumber)
+
+                    r.Font.NameFarEast = "SimSun"
+                    r.Font.Size = 8.5
+
+            Next pgNum
+        Next footer
+    Next sec
+
+End Sub
