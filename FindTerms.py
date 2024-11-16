@@ -1,6 +1,7 @@
 import os
 import csv
 import re
+import pdfplumber
 from pptx import Presentation
 from docx import Document
 import PyPDF2
@@ -24,52 +25,81 @@ def search_terms_in_text(terms_dict, text):
             matches.append(term_original)
     return matches
 
-
-
-def read_pptx(file_path, terms):
+def extract_text_from_pptx(file_path):
     presentation = Presentation(file_path)
-    results = []
+    text = []
+
     for slide_index, slide in enumerate(presentation.slides, start=1):
         for shape in slide.shapes:
             if shape.has_text_frame:
-                text = shape.text.strip()
-                matches = search_terms_in_text(terms, text)
-                for match in matches:
-                    results.append([slide_index, match, text, ""])
-    return results
+                if shape.text.strip():
+                    text.append((slide_index, shape.text.strip()))
+            elif shape.shape_type == 19:
+                table = shape.table
+                for row in table.rows:
+                    row_text = [cell.text_frame.text.strip() for cell in row.cells if cell.text_frame]
+                    if any(row_text):
+                        text.append((slide_index, " | ".join(row_text)))
 
-def read_docx(file_path, terms):
+    return text
+
+
+def extract_text_from_docx(file_path):
     doc = Document(file_path)
-    results = []
-    for paragraph_index, paragraph in enumerate(doc.paragraphs, start=1):
-        text = paragraph.text.strip()
-        matches = search_terms_in_text(terms, text)
-        for match in matches:
-            results.append([paragraph_index, match, text, ""])
-    return results
+    text = []
 
-def read_pdf(file_path, terms):
-    results = []
-    with open(file_path, "rb") as pdf_file:
-        pdf_reader = PyPDF2.PdfReader(pdf_file)
-        for page_index, page in enumerate(pdf_reader.pages, start=1):
-            text = page.extract_text().strip()
-            matches = search_terms_in_text(terms, text)
-            for match in matches:
-                results.append([page_index, match, text, ""])
-    return results
+    for paragraph in doc.paragraphs:
+        if paragraph.text.strip():
+            text.append((1, paragraph.text.strip()))
 
-def process_file(file_path, terms):
-    ext = os.path.splitext(file_path)[1].lower()
-    if ext == ".pptx":
-        return read_pptx(file_path, terms)
-    elif ext == ".docx":
-        return read_docx(file_path, terms)
-    elif ext == ".pdf":
-        return read_pdf(file_path, terms)
+    for table in doc.tables:
+        for row in table.rows:
+            row_text = [cell.text.strip() for cell in row.cells]
+            if any(row_text):
+                text.append((1, " | ".join(row_text)))
+
+    return text
+
+
+def extract_text_from_pdf(file_path):
+    text = []
+
+    with pdfplumber.open(file_path) as pdf:
+        for page_index, page in enumerate(pdf.pages, start=1):
+            page_text = page.extract_text()
+            if page_text:
+                for paragraph in page_text.split("\n"):
+                    if paragraph.strip():
+                        text.append((page_index, paragraph.strip()))
+
+            tables = page.extract_tables()
+            for table in tables:
+                for row in table:
+                    row_text = [cell.strip() for cell in row if cell]
+                    if any(row_text):
+                        text.append((page_index, " | ".join(row_text)))
+
+    return text
+
+def process_file(file_path, terms_dict):
+    extension = os.path.splitext(file_path)[1].lower()
+
+    if extension == ".docx":
+        text_with_pages = extract_text_from_docx(file_path)
+    elif extension == ".pptx":
+        text_with_pages = extract_text_from_pptx(file_path)
+    elif extension == ".pdf":
+        text_with_pages = extract_text_from_pdf(file_path)
     else:
-        print(f"Unsupported file format: {file_path}")
-        return []
+        raise ValueError(f"Unsupported file type: {extension}")
+
+    results = []
+    for page, paragraph in text_with_pages:
+        matches = search_terms_in_text(terms_dict, paragraph)
+        for term in matches:
+            results.append([page, term, paragraph.strip(), ""])
+
+    return results
 
 def write_results_to_csv(results, output_file):
     with open(output_file, mode="w", newline="", encoding="utf-8") as csv_file:
