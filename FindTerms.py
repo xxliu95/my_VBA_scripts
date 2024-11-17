@@ -16,14 +16,12 @@ def load_terms(terms_file):
     terms_dict = {term.strip().lower(): term.strip() for term in terms_df[term_col] if isinstance(term, str)}
     return terms_dict
 
-
 def search_terms_in_text(terms_dict, text):
-    matches = []
     for term_lower, term_original in terms_dict.items():
         pattern = r'\b' + re.escape(term_lower) + r'\b'
         if re.search(pattern, text, flags=re.IGNORECASE):
-            matches.append(term_original)
-    return matches
+            return [term_original]
+    return []
 
 def extract_text_from_pptx(file_path):
     presentation = Presentation(file_path)
@@ -40,9 +38,7 @@ def extract_text_from_pptx(file_path):
                     row_text = [cell.text_frame.text.strip() for cell in row.cells if cell.text_frame]
                     if any(row_text):
                         text.append((slide_index, " | ".join(row_text)))
-
     return text
-
 
 def extract_text_from_docx(file_path):
     doc = Document(file_path)
@@ -94,12 +90,17 @@ def process_file(file_path, terms_dict):
         raise ValueError(f"Unsupported file type: {extension}")
 
     results = []
+    seen_terms = set()
+
     for page, paragraph in text_with_pages:
         matches = search_terms_in_text(terms_dict, paragraph)
         for term in matches:
-            results.append([page, term, paragraph.strip(), ""])
-
+            if term not in seen_terms:
+                results.append([page, term, paragraph.strip(), ""])
+                seen_terms.add(term)
+                break
     return results
+
 
 def write_results_to_csv(results, output_file):
     with open(output_file, mode="w", newline="", encoding="utf-8") as csv_file:
