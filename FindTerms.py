@@ -17,11 +17,12 @@ def load_terms(terms_file):
     return terms_dict
 
 def search_terms_in_text(terms_dict, text):
+    matches = []
     for term_lower, term_original in terms_dict.items():
         pattern = r'\b' + re.escape(term_lower) + r'\b'
         if re.search(pattern, text, flags=re.IGNORECASE):
-            return [term_original]
-    return []
+            matches.append(term_original)
+    return matches
 
 def extract_text_from_pptx(file_path):
     presentation = Presentation(file_path)
@@ -93,19 +94,22 @@ def process_file(file_path, terms_dict):
     seen_terms = set()
 
     for page, paragraph in text_with_pages:
+        if len(seen_terms) == len(terms_dict):
+            break
+
         matches = search_terms_in_text(terms_dict, paragraph)
         for term in matches:
             if term not in seen_terms:
                 results.append([page, term, paragraph.strip(), ""])
                 seen_terms.add(term)
                 break
-    return results
 
+    return results
 
 def write_results_to_csv(results, output_file):
     with open(output_file, mode="w", newline="", encoding="utf-8") as csv_file:
         writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
-        writer.writerow(["Page/Slide", "Term", "Paragraph", "Comments"])
+        # writer.writerow(["Page/Slide", "Term", "Paragraph", "Comments"])
         for result in results:
             result[2] = result[2].replace("\n", " ")
             writer.writerow(result)
